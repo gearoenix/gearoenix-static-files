@@ -121,7 +121,7 @@ sdl2_src_dir = sdl2_root_dir / sdl2_extracted_dir_name
 
 
 def sdl2_after_build(sdk_lib_path, built_libs_path):
-    shutil.copy(built_libs_path / 'SDL2.lib', sdk_lib_path)
+    shutil.copy(built_libs_path / 'SDL2-static.lib', sdk_lib_path)
     shutil.copy(built_libs_path / 'SDL2main.lib', sdk_lib_path)
 
 
