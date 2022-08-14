@@ -4,6 +4,8 @@ import pathlib
 import urllib.request
 import shutil
 import subprocess
+import multiprocessing
+import logging
 
 print('Building SDKs.')
 
@@ -80,23 +82,29 @@ def extract(src, dst):
     shutil.unpack_archive(src_path, dst_path)
 
 
-def build_t1(root_dir, src_dir, after_build_fn):
+def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args = []):
     for plt, settings in platforms_settings.items():
         bld_dir = root_dir / ('build-' + plt)
         if bld_dir.exists():
             continue
         bld_dir.mkdir(exist_ok=True)
-        subprocess.call([
+        if 0 != subprocess.run([
             settings[CMAKE_PATH_KEY],
             '-S', src_dir,
             '-B', bld_dir,
             '-DCMAKE_BUILD_TYPE=Release',
-            *settings[CMAKE_ARGS_KEY]])
-        subprocess.call([
+            *settings[CMAKE_ARGS_KEY],
+            *additional_cmake_args]).returncode:
+            logging.error('Cmake config failed for platform: %s, source: %s', plt, src_dir)
+            continue
+        if 0 != subprocess.run([
             settings[CMAKE_PATH_KEY],
             '--build', bld_dir,
             '--config', 'Release',
-            *settings[CMAKE_ARGS_KEY]])
+            *settings[CMAKE_ARGS_KEY],
+            '--parallel', str(multiprocessing.cpu_count())]).returncode:
+            logging.error('Cmake build failed for platform: %s, source: %s', plt, src_dir)
+            continue
         after_build_fn(sdk_dir / plt / 'lib', bld_dir / 'Release')
 
 
@@ -117,7 +125,7 @@ def sdl2_after_build(sdk_lib_path, built_libs_path):
     shutil.copy(built_libs_path / 'SDL2main.lib', sdk_lib_path)
 
 
-build_t1(sdl2_root_dir, sdl2_src_dir, sdl2_after_build)
+build_t1(sdl2_root_dir, sdl2_src_dir, sdl2_after_build, ['-DSDL_LIBC=ON'])
 
 openal_str = 'openal'
 openal_zip_file = openal_str + '.zip'
@@ -136,3 +144,5 @@ def openal_after_build(sdk_lib_path, built_libs_path):
 
 
 build_t1(openal_root_dir, openal_src_dir, openal_after_build)
+
+shutil.make_archive(sdk_dir, 'zip', sdk_dir)
