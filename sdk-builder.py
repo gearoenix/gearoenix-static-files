@@ -27,7 +27,7 @@ if PLATFORM_WINDOWS_KEY in platform_name:
     platforms_settings[PLATFORM_WINDOWS_KEY] = {
         CMAKE_PATH_KEY: 'cmake',
         CMAKE_ARGS_KEY: [],
-        PLATFORM_BUILD_T1_PATH_KEY: 'Realse',
+        PLATFORM_BUILD_T1_PATH_KEY: 'Release',
     }
 
 if PLATFORM_LINUX_KEY in platform_name:
@@ -45,7 +45,7 @@ if android_ndk is not None and android_sdk is not None:
     android_ndk = pathlib.Path(android_ndk)
     android_sdk = pathlib.Path(android_sdk)
     print('Android platform added.')
-    platforms_settings[PLATFORM_WINDOWS_KEY] = {
+    platforms_settings[PLATFORM_ANDROID_KEY] = {
         CMAKE_PATH_KEY: android_sdk / 'cmake' / '3.22.1' / 'bin' / 'cmake',
         CMAKE_ARGS_KEY: [
             '-DCMAKE_TOOLCHAIN_FILE=' +
@@ -80,7 +80,7 @@ def download(url: str, file_name: str):
     file_path = temp_dir / file_name
     if file_path.exists():
         return
-    print('Downloading', file_name, '...')
+    print(f'Downloading {file_name} with url: {url}...')
     with urllib.request.urlopen(url) as response, open(file_path, 'wb') as out_file:
         shutil.copyfileobj(response, out_file)
 
@@ -93,7 +93,7 @@ def extract(src, dst):
     shutil.unpack_archive(src_path, dst_path)
 
 
-def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args = []):
+def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args=[]):
     for plt, settings in platforms_settings.items():
         bld_dir = root_dir / ('build-' + plt)
         if bld_dir.exists():
@@ -105,26 +105,29 @@ def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args = []):
             '-B', bld_dir,
             '-DCMAKE_BUILD_TYPE=Release',
             *settings[CMAKE_ARGS_KEY],
-            *additional_cmake_args]).returncode:
-            logging.error('Cmake config failed for platform: %s, source: %s', plt, src_dir)
+                *additional_cmake_args]).returncode:
+            logging.error(
+                'Cmake config failed for platform: %s, source: %s', plt, src_dir)
             continue
         if 0 != subprocess.run([
             settings[CMAKE_PATH_KEY],
             '--build', bld_dir,
             '--config', 'Release',
             *settings[CMAKE_ARGS_KEY],
-            '--parallel', str(multiprocessing.cpu_count())]).returncode:
-            logging.error('Cmake build failed for platform: %s, source: %s', plt, src_dir)
+                '--parallel', str(multiprocessing.cpu_count())]).returncode:
+            logging.error(
+                f'Cmake build failed for platform: {plt}, source: {src_dir}')
             continue
-        after_build_fn(sdk_dir / plt / 'lib', bld_dir / settings[PLATFORM_BUILD_T1_PATH_KEY])
+        after_build_fn(sdk_dir / plt / 'lib', bld_dir /
+                       settings[PLATFORM_BUILD_T1_PATH_KEY])
 
 
 sdl2_str = 'sdl2'
 sdl2_zip_file = sdl2_str + '.zip'
-sdl2_version = '2.0.22'
+sdl2_version = '2.26.0'
 download(
-    'https://www.libsdl.org/release/SDL2-' +
-    sdl2_version + '.zip', sdl2_zip_file)
+    f'https://github.com/libsdl-org/SDL/releases/download/release-{sdl2_version}/SDL2-{sdl2_version}.zip',
+    sdl2_zip_file)
 extract(sdl2_zip_file, sdl2_str)
 sdl2_extracted_dir_name = 'SDL2-' + sdl2_version
 sdl2_root_dir = temp_dir / sdl2_str
@@ -145,8 +148,8 @@ openal_str = 'openal'
 openal_zip_file = openal_str + '.zip'
 openal_version = '1.22.2'
 download(
-    'https://github.com/kcat/openal-soft/archive/refs/tags/' +
-    openal_version + '.zip', openal_zip_file)
+    f'https://github.com/kcat/openal-soft/archive/refs/tags/{openal_version}.zip',
+    openal_zip_file)
 extract(openal_zip_file, openal_str)
 openal_extracted_dir_name = 'openal-soft-' + openal_version
 openal_root_dir = temp_dir / openal_str
