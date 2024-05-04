@@ -124,7 +124,7 @@ def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args=[]):
 
 sdl2_str = 'sdl2'
 sdl2_zip_file = sdl2_str + '.zip'
-sdl2_version = '2.26.0'
+sdl2_version = '2.30.3'
 download(
     f'https://github.com/libsdl-org/SDL/releases/download/release-{sdl2_version}/SDL2-{sdl2_version}.zip',
     sdl2_zip_file)
@@ -166,3 +166,4 @@ def openal_after_build(sdk_lib_path, built_libs_path):
 build_t1(openal_root_dir, openal_src_dir, openal_after_build)
 
 shutil.make_archive(sdk_dir, 'zip', sdk_dir)
+print("SDK got compressed.")
