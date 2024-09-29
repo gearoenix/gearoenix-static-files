@@ -48,7 +48,7 @@ if android_ndk is not None and android_sdk is not None:
     android_sdk = pathlib.Path(android_sdk)
     print('Android platform added.')
     platforms_settings[PLATFORM_ANDROID_KEY] = {
-        CMAKE_PATH_KEY: android_sdk / 'cmake' / '3.22.1' / 'bin' / 'cmake',
+        CMAKE_PATH_KEY: android_sdk / 'cmake' / '3.30.3' / 'bin' / 'cmake',
         CMAKE_ARGS_KEY: [
             '-DCMAKE_TOOLCHAIN_FILE=' +
             str(android_ndk) + '/build/cmake/android.toolchain.cmake',
@@ -107,7 +107,7 @@ def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args=[]):
             '-B', bld_dir,
             '-DCMAKE_BUILD_TYPE=Release',
             *settings[CMAKE_ARGS_KEY],
-                *additional_cmake_args]).returncode:
+            *additional_cmake_args]).returncode:
             logging.error(
                 'Cmake config failed for platform: %s, source: %s', plt, src_dir)
             continue
@@ -115,8 +115,7 @@ def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args=[]):
             settings[CMAKE_PATH_KEY],
             '--build', bld_dir,
             '--config', 'Release',
-            *settings[CMAKE_ARGS_KEY],
-                '--parallel', str(multiprocessing.cpu_count())]).returncode:
+            '--parallel', str(multiprocessing.cpu_count())]).returncode:
             logging.error(
                 f'Cmake build failed for platform: {plt}, source: {src_dir}')
             continue
@@ -126,7 +125,7 @@ def build_t1(root_dir, src_dir, after_build_fn, additional_cmake_args=[]):
 
 sdl2_str = 'sdl2'
 sdl2_zip_file = sdl2_str + '.zip'
-sdl2_version = '2.30.3'
+sdl2_version = '2.30.7'
 download(
     f'https://github.com/libsdl-org/SDL/releases/download/release-{sdl2_version}/SDL2-{sdl2_version}.zip',
     sdl2_zip_file)
@@ -148,7 +147,7 @@ build_t1(sdl2_root_dir, sdl2_src_dir, sdl2_after_build, ['-DSDL_LIBC=ON'])
 
 openal_str = 'openal'
 openal_zip_file = openal_str + '.zip'
-openal_version = '1.22.2'
+openal_version = '1.23.1'
 download(
     f'https://github.com/kcat/openal-soft/archive/refs/tags/{openal_version}.zip',
     openal_zip_file)
